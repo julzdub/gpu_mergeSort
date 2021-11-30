@@ -1,0 +1,114 @@
+
+  ////////////////////////////////////////////////////////////////////////////
+ ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+RUNNING ON CUDA
+
+cudaEvent_t launch_begin, launch_end;
+cudaEventCreate(&launch_begin);
+cudaEventCreate(&launch_end);
+
+//Right before the launch begins
+cudaEventRecord(launch_begin, 0);
+
+//Once launch completes
+cudaEventRecord(launch_end, 0);
+
+//To record time at the end
+float time = 0;
+cudaEventElapsedTime(&time, launch_begin, launch_end);
+printf("Done! Time cost is. %f\n", time/1000);
+
+//Destroy cudaEvents
+cudaEventDestroy(launch_begin);
+cudaEventDestroy(launch_end);
+
+  ////////////////////////////////////////////////////////////////////////////
+ ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+RUNNING ON CPU
+
+float cpu_time = 0;
+clock_t then, now;
+
+//Before launch
+then = clock();
+
+//After launch
+now = clock();
+
+cpu_time = timeCost(then, now);
+print("CPU time cost in seconds %f\n", cpu_time);
+
+  ////////////////////////////////////////////////////////////////////////////
+ ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+TIMING CLASS
+
+#include "timing.h"
+#include <sys/time.h>
+#include <stdlib.h>
+#include <time.h>
+
+float timeCost(clock_t start, clock_t end)
+{
+    return (float)(end - start)/CLOCKS_PER_SEC;
+}
+
+/* Subtract the `struct timeval' value 'then' from 'now',
+   returning the difference as a float representing seconds
+   elapsed.
+*/
+float elapsedTime(struct timeval now, struct timeval then){
+
+   // Based on code from the gnu documentation.
+
+   /* Perform the carry for the later subtraction by updating then. */
+   if (now.tv_usec < then.tv_usec) {
+   
+      int nsec = (then.tv_usec - now.tv_usec) / 1000000 + 1;
+      then.tv_usec -= 1000000 * nsec;
+      then.tv_sec += nsec;
+   }
+
+
+   if (now.tv_usec - then.tv_usec > 1000000) {
+   
+      int nsec = (then.tv_usec - now.tv_usec) / 1000000;
+      then.tv_usec += 1000000 * nsec;
+      then.tv_sec -= nsec;
+   }
+
+
+   /* Compute the time remaining to wait.
+     tv_usec is certainly positive. */
+   int tv_sec = now.tv_sec - then.tv_sec;
+   int tv_usec = now.tv_usec - then.tv_usec;
+  
+  
+   return tv_sec + tv_usec / 1000000.0;
+}
+
+  ////////////////////////////////////////////////////////////////////////////
+ ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+TIMING H CLASS
+
+#ifndef TIMING_H
+#define TIMING_H
+
+#include <sys/time.h>
+#include <time.h>
+
+/* Subtract the `struct timeval' value 'then' from 'now',
+   returning the difference as a float representing seconds
+   elapsed.
+*/
+float elapsedTime(struct timeval now, struct timeval then);
+float timeCost(clock_t start, clock_t end);
+
+#endif
