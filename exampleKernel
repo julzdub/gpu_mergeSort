@@ -1,0 +1,89 @@
+//example kernel code
+
+// Bottom-level merge sort (binary search-based), this is 
+template<uint sortDir> __global__ void mergeSortSharedKernel(
+    uint *d_DstKey,
+    uint *d_DstVal,
+    uint *d_SrcKey,
+    uint *d_SrcVal,
+    uint arrayLength   //actual length for this block to process in the input array.
+)
+{
+    __shared__ uint s_key[SHARED_SIZE_LIMIT];  //SHARED_SIZE_LIMIT: number of elements a thread block processes
+    __shared__ uint s_val[SHARED_SIZE_LIMIT];   // Actually, the number of threads per block is SHARED_SIZE_LIMIT/2
+
+    d_SrcKey += blockIdx.x * SHARED_SIZE_LIMIT + threadIdx.x;
+    d_SrcVal += blockIdx.x * SHARED_SIZE_LIMIT + threadIdx.x;
+    d_DstKey += blockIdx.x * SHARED_SIZE_LIMIT + threadIdx.x;
+    d_DstVal += blockIdx.x * SHARED_SIZE_LIMIT + threadIdx.x;
+    s_key[threadIdx.x +                       0] = d_SrcKey[                      0];
+    s_val[threadIdx.x +                        0] =  d_SrcVal[                      0];
+    s_key[threadIdx.x + (SHARED_SIZE_LIMIT / 2)] = d_SrcKey[(SHARED_SIZE_LIMIT / 2)];
+    s_val[threadIdx.x + (SHARED_SIZE_LIMIT / 2)]  = d_SrcVal[(SHARED_SIZE_LIMIT / 2)];
+
+    for (uint stride = 1; stride < arrayLength; stride <<= 1)
+    {
+        uint     lPos = threadIdx.x  &  (stride - 1);
+        uint *baseKey = s_key + 2 * (threadIdx.x - lPos);
+        uint *baseVal = s_val + 2 *   (threadIdx.x - lPos);
+
+        __syncthreads();
+        uint keyA = baseKey[lPos +      0];
+        uint valA = baseVal[lPos +      0];
+        uint keyB = baseKey[lPos + stride];
+        uint valB = baseVal[lPos + stride];
+        uint posA = binarySearchExclusive<sortDir>(keyA, baseKey + stride, stride, stride) + lPos;
+        uint posB = binarySearchInclusive<sortDir> (keyB, baseKey +      0,    stride, stride) + lPos;
+        //the inclusive and exclusion binary search make the sort stable, if there is a duplicate of Bj in A, ( A is on the left)
+        // This make sure the duplicate in A will output earlier than Bj, thus using inclusive search for rank(Bj, A), which 
+        // guarantees that duplicates in the left go to the left in the resultant sorted array.
+        // How about a duplicate key in the same section A? how does the code deal with that?
+        // This is addressed by using the data mapping where each thread computes rank for a number at a unique
+        //    position, that is, the lPos is unique for these duplicates. ( Also making sure left duplicates goes to left )  
+      
+        __syncthreads();
+        baseKey[posA] = keyA;
+        baseVal[posA] = valA;
+        baseKey[posB] = keyB;
+        baseVal[posB] = valB;
+    }
+
+    __syncthreads();
+    d_DstKey[                      0] = s_key[threadIdx.x +                       0];
+    d_DstVal[                       0]  = s_val[threadIdx.x +                       0];
+    d_DstKey[(SHARED_SIZE_LIMIT / 2)] = s_key[threadIdx.x + (SHARED_SIZE_LIMIT / 2)];
+    d_DstVal[(SHARED_SIZE_LIMIT / 2)] =   s_val[threadIdx.x + (SHARED_SIZE_LIMIT / 2)];
+}
+
+
+static void mergeSortShared(
+    uint *d_DstKey,
+    uint *d_DstVal,
+    uint *d_SrcKey,
+    uint *d_SrcVal,
+    uint batchSize,
+    uint arrayLength,
+    uint sortDir
+)
+{
+    if (arrayLength < 2)
+    {
+        return;
+    }
+
+    assert(SHARED_SIZE_LIMIT % arrayLength == 0);
+    assert(((batchSize * arrayLength) % SHARED_SIZE_LIMIT) == 0);
+    uint  blockCount = batchSize * arrayLength / SHARED_SIZE_LIMIT;
+    uint threadCount = SHARED_SIZE_LIMIT / 2;
+
+    if (sortDir)
+    {
+        mergeSortSharedKernel<1U><<<blockCount, threadCount>>>(d_DstKey, d_DstVal, d_SrcKey, d_SrcVal, arrayLength);
+        getLastCudaError("mergeSortShared<1><<<>>> failed\n");
+    }
+    else
+    {
+        mergeSortSharedKernel<0U><<<blockCount, threadCount>>>(d_DstKey, d_DstVal, d_SrcKey, d_SrcVal, arrayLength);
+        getLastCudaError("mergeSortShared<0><<<>>> failed\n");
+    }
+}
