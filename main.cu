@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "cpuMergeSort.h"
 //include header files for .cu
 
 int willPrint = 0;
@@ -47,4 +49,5 @@ int main(int argc, char *argv[])
 	runCuda(arraySize, *inputArray);
 	
 	//Call cpu setup
+	mergeSort(inputArray, 0, arraySize - 1);
 }
