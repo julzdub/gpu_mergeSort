@@ -46,4 +46,5 @@ int main(int argc, char *argv[])
 	//Call kernel setup
 	runCuda(arraySize, *inputArray);
 	
+	//Call cpu setup
 }
