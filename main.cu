@@ -6,6 +6,16 @@
 
 int willPrint = 0;
 
+void printArray(int *arr, int n){
+
+	int i;
+ 
+	for(i = 0; i < n; i ++)
+	   printf("%d ", arr[i]);
+ 
+	printf("\n");
+ }
+
 void usage()
 {
 	printf("Usage: <./fileName> <arraySize> <printOptional>");
