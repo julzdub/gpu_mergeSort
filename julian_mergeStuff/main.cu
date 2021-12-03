@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
+#include <float.h>
 #include "cpuMergeSort.h"
 #include "timing.h"
 
@@ -21,11 +23,11 @@ void usage()
 	printf("Usage: <./fileName> <arraySize> <printOptional>");
 }
 
-int * fillArray(int n)
+int * fillArray(int n, int upbound)
 {
    int i;
    
-   int *ret = (int *)malloc(sizeof(int) * n);
+   int *ret = (int *)malloc(sizeof(int) * n );
 
    /* Intializes random number generator */
    //seeds the random number generator used by the function rand.
@@ -33,9 +35,29 @@ int * fillArray(int n)
 
    /* generate n random numbers from 0 to unbound - 1 */
    for( i = 0 ; i < n ; i++ ) {
-      ret[i] = rand();
+      int num = (rand() % 100);
+      ret[i] = num;
+      //printf("%f\n", num);
    }
    return ret;
+}
+
+void runCPU(int * inputArray, int start, int end) {
+	
+    	clock_t now, then;
+    	
+    	printf("Timing CPU implementation…\n");
+    	then = clock();
+    	mergeSort(inputArray, start, end);
+    	now =  clock();
+    	
+    	// measure the time spent on CPU
+       float time = 0;
+       time = timeCost(then, now);
+       
+       
+
+       printf(" done. CPU time cost in second: %f\n", time);
 }
 
 int main(int argc, char *argv[])
@@ -62,7 +84,7 @@ int main(int argc, char *argv[])
 	
 	int arraySize = atoi(argv[1]);
 	
-	if(!arraySize || arraySize > 1024)
+	if(!arraySize)
 	{
 		printf("Array Size Too Large");
 		usage();
@@ -70,7 +92,7 @@ int main(int argc, char *argv[])
 	}
 	
 	//Create and fill input array
-	int *inputArray = fillArray(arraySize);
+	int *inputArray = fillArray(arraySize, 200);
 	
 	//Call kernel setup
 	//runCuda(arraySize, *inputArray);
@@ -79,7 +101,7 @@ int main(int argc, char *argv[])
 		printArray(inputArray, arraySize);
 	}
 	//Call cpu setup
-	mergeSort(inputArray, 0, arraySize - 1);
+	runCPU(inputArray, 0, arraySize - 1);
 	printArray(inputArray, arraySize);
 
 	free(inputArray);
