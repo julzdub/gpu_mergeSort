@@ -1,14 +1,41 @@
 #include <stdlib.h>
 #include <stdio.h>
-
 #include "cpuMergeSort.h"
-//include header files for .cu
+#include "timing.h"
 
 int willPrint = 0;
+
+void printArray(int * arr, int n) {
+
+	int i;
+ 
+	for(i = 0; i < n; i++) {
+	   printf("%d ", arr[i]);
+	}
+
+	printf("\n");
+}
 
 void usage()
 {
 	printf("Usage: <./fileName> <arraySize> <printOptional>");
+}
+
+int * fillArray(int n)
+{
+   int i;
+   
+   int *ret = (int *)malloc(sizeof(int) * n);
+
+   /* Intializes random number generator */
+   //seeds the random number generator used by the function rand.
+   srand(time(NULL));
+
+   /* generate n random numbers from 0 to unbound - 1 */
+   for( i = 0 ; i < n ; i++ ) {
+      ret[i] = rand();
+   }
+   return ret;
 }
 
 int main(int argc, char *argv[])
@@ -43,11 +70,19 @@ int main(int argc, char *argv[])
 	}
 	
 	//Create and fill input array
-	int *inputArray = makeArray(arraySize);
+	int *inputArray = fillArray(arraySize);
 	
 	//Call kernel setup
-	runCuda(arraySize, *inputArray);
+	//runCuda(arraySize, *inputArray);
 	
+	if(willPrint) {
+		printArray(inputArray, arraySize);
+	}
 	//Call cpu setup
 	mergeSort(inputArray, 0, arraySize - 1);
+	printArray(inputArray, arraySize);
+
+	free(inputArray);
+
+	return 0;
 }
