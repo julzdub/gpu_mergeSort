@@ -13,7 +13,7 @@ main:$(OBJS) $(GPUOBJS)
 main.o: main.cu
 	$(NVCC) -arch=sm_52 -c main.cu 
 
-cpuMergeSort.o: cpuMergeSort.cpuMergeSort
+cpuMergeSort.o: cpuMergeSort.c
 	$(CXX) -c cpuMergeSort.c
 
 cpuMergeSort.o: cpuMergeSort.h
