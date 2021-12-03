@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "cpuMergeSort.h"
+#include "timing.h"
 
 int willPrint = 0;
 

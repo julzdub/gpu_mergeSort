@@ -4,7 +4,7 @@ CXX = g++
 
 # here are all the objects
 GPUOBJS = main.o  
-OBJS = cpuMergeSort.o
+OBJS = cpuMergeSort.o timing.o
 
 # make and compile
 main:$(OBJS) $(GPUOBJS)
@@ -12,6 +12,14 @@ main:$(OBJS) $(GPUOBJS)
 
 main.o: main.cu
 	$(NVCC) -arch=sm_52 -c main.cu 
+
+cpuMergeSort.o: cpuMergeSort.cpuMergeSort
+	$(CXX) -c cpuMergeSort.c
+
+cpuMergeSort.o: cpuMergeSort.h
+
+timing.o: timing.c 
+	$(CXX) -c timing.c 
 
 clean:
 	rm -f *.o
