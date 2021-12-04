@@ -8,6 +8,8 @@ void runCUDA( int *arr, int n, int tile_width);
 __global__ void mergeSortKernel(double *in, int n);
 int * fillArray(int n, int upbound);
 inline void check_cuda_errors(const char *filename, const int line_number);
+int validateOutput(int size, int tile_width, int *arr);
+void printArray2(int *arr,int start);
 //TEMP HEADER
 
 
@@ -43,7 +45,7 @@ int * fillArray(int n, int upbound)
 
 __global__ void mergeSortKernel(int *in, int *out, int n)
 {
-	extern __shared__ double sdata[];
+	extern __shared__ int sdata[];
 	
 	// load the shared memory
 	unsigned int tid = threadIdx.x;
@@ -56,6 +58,8 @@ __global__ void mergeSortKernel(int *in, int *out, int n)
    if(i+blockDim.x < n){
       sdata[tid+blockDim.x] = in[i+blockDim.x] ;
    }
+   __syncthreads();
+
 
    for(unsigned int s = 2; s <= (blockDim.x*2); s*=2){
         if(tid < (blockDim.x*2)/s && s > 2){
@@ -86,7 +90,8 @@ __global__ void mergeSortKernel(int *in, int *out, int n)
            }
         }
         __syncthreads();
-    }
+
+}
 
    if(i < n){
       out[i] = sdata[tid];
@@ -102,7 +107,7 @@ __global__ void mergeSortKernel(int *in, int *out, int n)
 void runCUDA( int *arr, int n, int tile_width)
 {    
    int *h_in = arr; //Filled array
-   int *h_out = (int *)malloc(sizeof(int) * n ); //Allocate ouput mem
+   int *h_out = (int *)malloc(sizeof(int) * n ); //Allocate output mem
    int *d_in;//Device in pointer
    int *d_out;
 
@@ -112,7 +117,10 @@ void runCUDA( int *arr, int n, int tile_width)
    cudaMemcpy(d_in, h_in, sizeof(int)*n, cudaMemcpyHostToDevice);//Copy in array to device
 
    int num_block = (ceil(n/(double)tile_width));//Calculate grid size
+   printf("\n\n\nArray size is %d\n", n);
    printf("Num of blocks is %d\n", num_block);
+   printf("Tile size is %d\n", tile_width);
+   printf("Active threads on run 1 are %f\n\n\n", ((double)tile_width)/2);
    dim3 block(tile_width/2,1,1);//Only 1/2 threads per block
    dim3 grid(num_block, 1,1);//Define grid
 
@@ -122,7 +130,37 @@ void runCUDA( int *arr, int n, int tile_width)
 
    cudaMemcpy(h_out, d_out, sizeof(int)*n, cudaMemcpyDeviceToHost);
 
-   printArray(h_out, n);
+   //printArray(h_out, n);
+   
+   int isVal = validateOutput(n, tile_width, h_out);
+
+    if(isVal == -1){
+       puts("\n\nOutput is valid!");
+    }else{
+       printf("\n\nOutput is NOT valid! At: %d\n\n", isVal);
+       printArray2(h_out, isVal);
+    }
+
+   free(h_in);
+   free(h_out);
+   cudaFree(d_in);
+   cudaFree(d_out);
+}
+
+int validateOutput(int size, int tile_width, int *arr){
+
+   int i;
+   for(i = 0; i < size/tile_width; i++){
+      int j;
+      for(j = 1; j < tile_width; j++){
+         if(arr[(i*tile_width)+j] < arr[(i*tile_width)+j-1] && arr[(i*tile_width)+j] != arr[(i*tile_width)+j-1]){
+            printf("\n\n%d > %d", arr[(i*tile_width)+j], arr[(i*tile_width)+j-1]);
+            return (i*tile_width)+j;
+         }
+      }
+   }
+   return -1;
+
 }
 
 
@@ -136,8 +174,28 @@ void printArray(int *arr, int n){
    printf("\n");
 }
 
-int main(int argc, char *argv[]){
-    int* arr = fillArray(128, 200);
-    printArray(arr, 128);
-    runCUDA( arr, 128, 32); // Array, Elements, Tile size
+//To print out elements arround an invalid output
+void printArray2(int *arr,int start){
+
+   int i;
+
+   for(i = -25; i < 25; i ++)
+      printf("%d ", arr[start+i]);
+
+   printf("\n");
 }
+
+
+int main(int argc, char *argv[]){
+   int size = 33554432; //Set Array size here
+   int tile_width = 1024; //set tile_width here
+
+
+   int* arr = fillArray(size, 10000);
+
+
+    runCUDA( arr, size, tile_width); // Array, Elements, Tile size
+
+}
+
+
