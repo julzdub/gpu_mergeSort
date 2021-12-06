@@ -23,6 +23,8 @@ void mergeCPU(int* arr, int l, int m, int r);
 void runCPU(int* inputArray, int size);
 //int min(int x, int y);
 void copyArray(int* original, int* copy, int size);
+void printOutput(FILE * f_out, int * arr, int size);
+
 //TEMP HEADER
 
 
@@ -438,28 +440,33 @@ int main(int argc, char *argv[]){
 
    //int arr_size = sizeof(arr) / sizeof(arr[0]);
 
-    //runCUDA( arr, size, tile_width); // Array, Elements, Tile size
+    runCUDA( arr, size, tile_width); // Array, Elements, Tile size
     //mergeSort(arr, 0, arr_size - 1);
     //printArray(arr, size);
 
 
     //printing to output files
-    FILE * output_CPU = fopen("output_CPU.txt", w);
-    FILE * output_GPU = fopen("output_GPU.txt", w);
+    FILE * output_CPU = NULL;
+    output_CPU = fopen("output_CPU.txt", "w");
+    FILE * output_GPU = NULL;
+    output_GPU = fopen("output_GPU.txt", "w");
 
-    printOutput(output_CPU, arrCPU);
-    printOutput(output_GPU, arr);
+    printOutput(output_CPU, arrCPU, size);
+    printOutput(output_GPU, arr, size);
+
+    fclose(output_CPU);
+    fclose(output_GPU);
 
 }
 
-void printOutput(FILE * f_out, int * arr) {
+void printOutput(FILE * f_out, int * arr, int n) {
    int i;
    time_t t; 
    time(&t);
 
    fprintf(f_out, "%s \n", ctime(&t));
    for(i = 0; i < n; i ++)
-      fprintf(f_out, "%d ", arr[i]);
+      fprintf(f_out, "%d \n", arr[i]);
 
-   fprintf("\n");
+   
 }
