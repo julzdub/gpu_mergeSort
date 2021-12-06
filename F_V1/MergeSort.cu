@@ -438,9 +438,28 @@ int main(int argc, char *argv[]){
 
    //int arr_size = sizeof(arr) / sizeof(arr[0]);
 
-    runCUDA( arr, size, tile_width); // Array, Elements, Tile size
+    //runCUDA( arr, size, tile_width); // Array, Elements, Tile size
     //mergeSort(arr, 0, arr_size - 1);
     //printArray(arr, size);
+
+
+    //printing to output files
+    FILE * output_CPU = fopen("output_CPU.txt", w);
+    FILE * output_GPU = fopen("output_GPU.txt", w);
+
+    printOutput(output_CPU, arrCPU);
+    printOutput(output_GPU, arr);
+
 }
 
+void printOutput(FILE * f_out, int * arr) {
+   int i;
+   time_t t; 
+   time(&t);
 
+   fprintf(f_out, "%s \n", ctime(&t));
+   for(i = 0; i < n; i ++)
+      fprintf(f_out, "%d ", arr[i]);
+
+   fprintf("\n");
+}
