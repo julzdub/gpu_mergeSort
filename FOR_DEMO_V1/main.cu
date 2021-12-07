@@ -18,12 +18,9 @@ void usage()
 
 void printOutput(FILE * f_out, int * arr, int n) {
    int i;
-   time_t t; 
-   time(&t);
-
-   fprintf(f_out, "%s \n", ctime(&t));
+   
    for(i = 0; i < n; i ++)
-      fprintf(f_out, "%d \n", arr[i]);
+      fprintf(f_out, "%d ", arr[i]);
 
    
 }
