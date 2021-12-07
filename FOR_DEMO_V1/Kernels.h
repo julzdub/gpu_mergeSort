@@ -17,6 +17,8 @@ __device__  int binarySearchExclusive( int val,  int *data,   int L,   int strid
 
 __global__ void mergeKernel(int* in, int* out, int dataSize, int tile_size);
 
+__global__ void mergeSortKernelOld(int *in, int *out, int n);
+
 const int SHARED_SIZE_LIMIT = 1024;
 
 int * runCUDA( int *array, int dataSize);

@@ -1,5 +1,69 @@
 #include "Kernels.h"
 
+
+//Old implementation of sorting tiles
+__global__ void mergeSortKernelOld(int *in, int *out, int n)
+{
+	extern __shared__ int sdata[];
+	
+	// load the shared memory
+	unsigned int tid = threadIdx.x;
+	unsigned int i = blockIdx.x*(blockDim.x*2) + threadIdx.x;
+   
+
+   if(i < n){
+      sdata[tid] = in[i];
+   }
+
+   if(i+blockDim.x < n){
+      sdata[tid+blockDim.x] = in[i+blockDim.x] ;
+   }
+   __syncthreads();
+
+
+   for(unsigned int s = 2; s <= (blockDim.x*2); s*=2){
+        if(tid < (blockDim.x*2)/s && s > 2){
+            int start1 = tid*s; //First array offset
+            int start2 = start1+(s/2); //Second array offset
+            int size = s/2; //Size of each array will be the stride cut in half
+
+            for(int x = size-1; x>=0; x--){
+               int j;
+               int last = sdata[start2-1];
+         
+
+               for(j = size-2; j>= 0 && sdata[start1+j] > sdata[start2+x]; j--){
+                  sdata[start1+(j+1)] = sdata[start1+(j)];
+               }
+
+               if(j != size-2 || last > sdata[start2+x]){
+                  sdata[start1+(j+1)] = sdata[start2+x];
+                  sdata[start2+x] = last;
+               }
+            }
+        }else if(tid < (blockDim.x*2)/s){ //The initial comparison of just two elements
+           int start = tid*s;
+           if(sdata[start] > sdata[start+1]){
+              int temp = sdata[start];
+              sdata[start] = sdata[start+1];
+              sdata[start+1] = temp;
+           }
+        }
+        __syncthreads();
+
+}
+
+   if(i < n){
+      out[i] = sdata[tid];
+   }
+
+   if(i+blockDim.x < n){
+      out[i+blockDim.x] = sdata[tid+blockDim.x] ;
+   }
+
+
+}
+
 __global__ void mergeSortSharedKernel(
      int *d_DstKey,
      int *d_DstVal,
