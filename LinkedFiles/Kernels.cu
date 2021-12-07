@@ -1,4 +1,5 @@
-#include kernels.h
+#include "Kernels.h"
+#include "MergeSortSetup.h"
 
 __global__ void mergeSortSharedKernel(
      int *d_DstKey,

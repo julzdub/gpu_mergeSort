@@ -4,19 +4,11 @@
 #include <float.h>
 #include "cpuMergeSort.h"
 #include "timing.h"
+#include "MergeSortSetup.h"
+
+void copyArray(int* original, int* copy, int size);
 
 int willPrint = 0;
-
-void printArray(int * arr, int n) {
-
-	int i;
- 
-	for(i = 0; i < n; i++) {
-	   printf("%d ", arr[i]);
-	}
-
-	printf("\n");
-}
 
 void usage()
 {
@@ -60,6 +52,15 @@ void runCPU(int * inputArray, int start, int end) {
        printf(" done. CPU time cost in second: %f\n", time);
 }
 
+void copyArray(int* original, int* copy, int size) {
+   int i;
+   for(i = 0; i < size; i++){
+
+      copy[i] = original[i];
+   }
+}
+
+
 int main(int argc, char *argv[])
 {
 	//get user input (number of elements and printing option p)
@@ -92,19 +93,24 @@ int main(int argc, char *argv[])
 	}
 	
 	//Create and fill input array
-	int *inputArray = fillArray(arraySize, 200);
+	int *cpuArray = fillArray(arraySize, 200);
+	int *gpuArray = (int*)malloc(sizeof(int) *arraySize);
+	copyArray(cpuArray, gpuArray, arraySize);
+
+	//Call cpu setup
+	runCPU(cpuArray, 0, arraySize - 1);
+
+	if(willPrint) {
+		printArray(cpuArray, arraySize);
+	}
 	
 	//Call kernel setup
-	//runCuda(arraySize, *inputArray);
-	
-	if(willPrint) {
-		printArray(inputArray, arraySize);
-	}
-	//Call cpu setup
-	runCPU(inputArray, 0, arraySize - 1);
-	printArray(inputArray, arraySize);
+	runCuda(gpuArray, arraySize);
 
-	free(inputArray);
+	//Call cpu setup
+
+
+	free(cpuArray);
 
 	return 0;
 }

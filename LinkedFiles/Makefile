@@ -24,6 +24,8 @@ cpuMergeSort.o: cpuMergeSort.c
 timing.o: timing.c
 	$(CXX) -c timing.c
 	
+
+	
 clean:
 	rm -f *.o
 	rm -f project
